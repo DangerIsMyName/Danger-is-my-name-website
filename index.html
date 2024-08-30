@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bouncing 3D Cubes with Three.js</title>
+    <title>Spinning 3D Cubes with Unique Colors</title>
     <style>
         body {
             margin: 0;
@@ -62,53 +62,53 @@
 
             // Array to hold cubes
             const cubes = [];
-            const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff];
+            const usedColors = new Set(); // To ensure unique colors
 
-            // Create multiple cubes
-            for (let i = 0; i < 10; i++) {
-                const geometry = new THREE.BoxGeometry();
+            // Function to generate a unique random color
+            function getUniqueColor() {
+                let color;
+                do {
+                    color = `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
+                } while (usedColors.has(color)); // Ensure no duplicate colors
+                usedColors.add(color);
+                return color;
+            }
+
+            // Create multiple small cubes with unique colors and varying spin speeds
+            for (let i = 0; i < 50; i++) {
+                const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5); // Smaller cubes
                 const material = new THREE.MeshStandardMaterial({
-                    color: colors[Math.floor(Math.random() * colors.length)],
+                    color: getUniqueColor(),
                     metalness: 0.7,
                     roughness: 0.3
                 });
 
                 const cube = new THREE.Mesh(geometry, material);
                 cube.position.set(
-                    Math.random() * 10 - 5,
-                    Math.random() * 10 - 5,
+                    Math.random() * window.innerWidth / 100 - 5,
+                    Math.random() * window.innerHeight / 100 - 5,
                     Math.random() * 10 - 5
                 );
 
-                cube.velocity = new THREE.Vector3(
-                    (Math.random() - 0.5) * 0.2,
-                    (Math.random() - 0.5) * 0.2,
-                    (Math.random() - 0.5) * 0.2
-                );
+                // Assign random spin speeds
+                cube.spinSpeedX = (Math.random() * 0.05) + 0.01; // Random speed between 0.01 and 0.06
+                cube.spinSpeedY = (Math.random() * 0.05) + 0.01;
 
                 scene.add(cube);
                 cubes.push(cube);
             }
 
             // Camera position
-            camera.position.z = 10;
+            camera.position.z = 15;
 
             // Animation loop
             function animate() {
                 requestAnimationFrame(animate);
 
-                // Update cube positions
+                // Update cube rotations and positions
                 cubes.forEach(cube => {
-                    cube.position.add(cube.velocity);
-
-                    // Check for boundaries and reverse velocity if needed
-                    if (Math.abs(cube.position.x) > 5) cube.velocity.x *= -1;
-                    if (Math.abs(cube.position.y) > 5) cube.velocity.y *= -1;
-                    if (Math.abs(cube.position.z) > 5) cube.velocity.z *= -1;
-
-                    // Rotate cubes
-                    cube.rotation.x += 0.01;
-                    cube.rotation.y += 0.01;
+                    cube.rotation.x += cube.spinSpeedX;
+                    cube.rotation.y += cube.spinSpeedY;
                 });
 
                 renderer.render(scene, camera);
