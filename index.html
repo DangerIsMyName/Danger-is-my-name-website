@@ -1,11 +1,90 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Cube with Three.js</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #121212;
+            color: #fff;
+            height: 100vh;
+        }
+        #webgl-error {
+            position: absolute;
+            color: #ff3333;
+            font-size: 18px;
+            text-align: center;
+        }
+    </style>
 </head>
-
 <body>
-    <h1>Hello, World!  Danger is my name</h1>
-</body>
+    <noscript>
+        <div id="webgl-error">JavaScript is disabled in your browser. Please enable JavaScript to view this page.</div>
+    </noscript>
+    <div id="webgl-error" style="display: none;">WebGL is not supported in your browser. Please update your browser or use a device that supports WebGL.</div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+    <script>
+        // WebGL Support Check
+        function webglAvailable() {
+            try {
+                const canvas = document.createElement('canvas');
+                return !!(window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+            } catch (e) {
+                return false;
+            }
+        }
 
+        if (!webglAvailable()) {
+            document.getElementById('webgl-error').style.display = 'block';
+        } else {
+            // Scene setup
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Geometry and Material for the cube
+            const geometry = new THREE.BoxGeometry();
+            const material = new THREE.MeshStandardMaterial({ color: 0x00ffcc, metalness: 0.7, roughness: 0.3 });
+            const cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            const pointLight = new THREE.PointLight(0xffffff, 1);
+            pointLight.position.set(5, 5, 5);
+            scene.add(pointLight);
+
+            // Camera position
+            camera.position.z = 5;
+
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                cube.rotation.x += 0.01;
+                cube.rotation.y += 0.01;
+                renderer.render(scene, camera);
+            }
+
+            // Responsive resizing
+            window.addEventListener('resize', () => {
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+            });
+
+            animate();
+        }
+    </script>
+</body>
 </html>
