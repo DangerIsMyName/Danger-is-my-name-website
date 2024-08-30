@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spinning 3D Cubes with Unique Colors</title>
+    <title>Bouncing and Colliding 3D Cubes</title>
     <style>
         body {
             margin: 0;
@@ -30,7 +30,6 @@
     <div id="webgl-error" style="display: none;">WebGL is not supported in your browser. Please update your browser or use a device that supports WebGL.</div>
 
     <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.5/gsap.min.js"></script>
     <script>
         // WebGL Support Check
         function webglAvailable() {
@@ -62,21 +61,21 @@
 
             // Array to hold cubes
             const cubes = [];
-            const usedColors = new Set(); // To ensure unique colors
+            const usedColors = new Set();
 
             // Function to generate a unique random color
             function getUniqueColor() {
                 let color;
                 do {
                     color = `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
-                } while (usedColors.has(color)); // Ensure no duplicate colors
+                } while (usedColors.has(color));
                 usedColors.add(color);
                 return color;
             }
 
-            // Create multiple small cubes with unique colors and varying spin speeds
+            // Create cubes with unique colors, velocities, and spin speeds
             for (let i = 0; i < 50; i++) {
-                const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5); // Smaller cubes
+                const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
                 const material = new THREE.MeshStandardMaterial({
                     color: getUniqueColor(),
                     metalness: 0.7,
@@ -90,8 +89,14 @@
                     Math.random() * 10 - 5
                 );
 
-                // Assign random spin speeds
-                cube.spinSpeedX = (Math.random() * 0.05) + 0.01; // Random speed between 0.01 and 0.06
+                // Random velocities and spin speeds
+                cube.velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.2,
+                    (Math.random() - 0.5) * 0.2,
+                    (Math.random() - 0.5) * 0.2
+                );
+
+                cube.spinSpeedX = (Math.random() * 0.05) + 0.01;
                 cube.spinSpeedY = (Math.random() * 0.05) + 0.01;
 
                 scene.add(cube);
@@ -101,15 +106,48 @@
             // Camera position
             camera.position.z = 15;
 
+            // Function to check for collision and bounce cubes off each other
+            function checkCollisions(cube1, cube2) {
+                const distance = cube1.position.distanceTo(cube2.position);
+                const minDistance = 0.5;
+
+                // If the distance is less than the sum of their sizes, they collide
+                if (distance < minDistance) {
+                    // Swap velocities (basic elastic collision response)
+                    const temp = cube1.velocity.clone();
+                    cube1.velocity.copy(cube2.velocity);
+                    cube2.velocity.copy(temp);
+                }
+            }
+
             // Animation loop
             function animate() {
                 requestAnimationFrame(animate);
 
-                // Update cube rotations and positions
+                // Update cube positions and check for boundaries
                 cubes.forEach(cube => {
+                    cube.position.add(cube.velocity);
                     cube.rotation.x += cube.spinSpeedX;
                     cube.rotation.y += cube.spinSpeedY;
+
+                    // Bounce off the walls
+                    if (cube.position.x > window.innerWidth / 100 - 5 || cube.position.x < -window.innerWidth / 100 + 5) {
+                        cube.velocity.x *= -1;
+                    }
+                    if (cube.position.y > window.innerHeight / 100 - 5 || cube.position.y < -window.innerHeight / 100 + 5) {
+                        cube.velocity.y *= -1;
+                    }
+                    if (cube.position.z > 5 || cube.position.z < -5) {
+                        cube.velocity.z *= -1;
+                    }
                 });
+
+                // Check collisions between cubes
+                for (let i = 0; i < cubes.length; i++) {
+                    for (let j = i + 1; j < cubes.length; j++) {
+                        checkCollisions(cubes[i], cubes[j]);
+                    }
+                }
 
                 renderer.render(scene, camera);
             }
